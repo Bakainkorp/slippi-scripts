@@ -36,7 +36,7 @@ function runCommand(cmdStr, path = null, includeLog = false) {
 // kill command (os sensitive) by name of executable
 function kill(cmdStrName) {
 	if (isWin) {
-        execSync(`taskkill /F /IM "${cmdStrName}.exe" /T`);
+        execSync(`taskkill /F /IM "${cmdStrName}" /T`);
     } else {
         execSync(`killall ${cmdStrName}`);
     }

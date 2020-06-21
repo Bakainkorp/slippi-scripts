@@ -4,6 +4,7 @@ const { launchOBSWebsocket, recordOBSWebsocket} = require('./obs.js');
 const OBSWebSocket = require('obs-websocket-js');
 const yargs = require('yargs');
 const ora = require("ora");
+const path = require('path');
 
 // cli
 const argv = yargs
@@ -20,7 +21,8 @@ const argv = yargs
       .option('dolphinLag', {
           alias: 'l',
           description: 'Set amount of time dolphin needs to start up',
-          type: 'number'
+          type: 'number',
+          default: 3
       })
       .help()
       .alias('help', 'h')
@@ -31,7 +33,7 @@ var config;
 if (argv.config === undefined) {
     console.error('No config file.');
 } else {
-    config = require(argv.config);
+    config = require(path.join(process.cwd(), path.basename(argv.config)));
 }
 
 // playback script: determine what to run

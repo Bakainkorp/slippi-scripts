@@ -1,4 +1,5 @@
-const { sec2time } = require('./utils.js');
+const { sec2time, runCommand } = require('./utils.js');
+const { exec, execSync, fork } = require("child_process");
 // slippi deps
 const fs = require('fs');
 const _ = require('lodash');
@@ -135,6 +136,10 @@ const argv = yargs
           type: 'array',
           default: []
       })
+      .option('config', {
+          description: 'Path to config file to use (relative to script)',
+          type: 'string'
+      })
       .help()
       .alias('help', 'h')
       .argv;
@@ -148,7 +153,12 @@ var minKills = argv.minKills;
 // anything else for character timestamping
 var timestampType = 0;
 // slippi directory
-const basePath = path.join(process.cwd(), argv.dir);
+const defaultSlippi = path.join(process.cwd(), argv.dir);
+if (!fs.existsSync(defaultSlippi)) {
+  basePath = path.join(argv.dir);
+} else {
+  basePath = defaultSlippi;
+}
 // output
 if (!fs.existsSync("./output")) {
     fs.mkdirSync("./output");
@@ -565,12 +575,20 @@ function getGames() {
     if (argv.highlight) {
         highlight.queue = shuffle(highlight.queue);
         // @NOTE: some clips take longer to start playing, so a buffer is necessary
-        highlight.totalLengthSeconds = totalHighlightLength + highlight.queue.length * 10;
+        highlight.totalLengthSeconds = totalHighlightLength + highlight.queue.length * 20;
         fs.writeFileSync(highlightFileName, JSON.stringify(highlight));
         console.log(`**** Highlights ****`);
         console.log(`${noCombos / (filteredFiles - badFiles) * 100}% of games had no valid ${argv.highlightType}`);
         console.log(`${highlight.queue.length} highlight(s) found`);
         console.log(`Approximate highlight reel length: ${sec2time(totalHighlightLength)}\n`);
+    }
+    if (argv._.includes('play')) {
+      let cfgPath = path.join(process.cwd(), argv.config),
+          cfg = require(cfgPath),
+          rpl = path.join(process.cwd(), dolphinOutputFileName);
+      cfg['REPLAY'] = rpl;
+      fs.writeFileSync(cfgPath, JSON.stringify(cfg));
+      fork(`${process.cwd()}/src/playback.js`,['play','-c', cfgPath])
     }
 }
 getGames();

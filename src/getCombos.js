@@ -3,8 +3,9 @@ const _ = require('lodash');
 const path = require('path');
 const slp = require('slp-parser-js');
 const SlippiGame = slp.default; // npm install slp-parser-js
+const { sec2time } = require('./utils.js');
 
-const basePath = path.join(process.cwd(), 'slp/'); // this var is "<directory your script is in>/slp"
+const basePath = path.join(process.cwd(), 'Q1/'); // this var is "<directory your script is in>/slp"
 
 const outputFilename = "./combos.json";
 
@@ -23,7 +24,7 @@ const fdCGers = [9, 12, 13, 22]; // Marth, Peach, Pikachu, and Doc
 const filterByNames = ["FoxInTheB0XX"]; // add names as strings to this array (checks both netplay name and nametags). `["Nikki", "Metonym", "metonym"]`
 const filterByCharacters = ["Fox"]; //add character names as strings. Use the regular or shortnames from here: https://github.com/project-slippi/slp-parser-js/blob/master/src/melee/characters.ts
 
-var minimumComboPercent = 40; // this decides the threshold for combos
+var minimumComboPercent = 45; // this decides the threshold for combos
 var originalMin = minimumComboPercent; // we use this to reset the threshold
 
 // Removal Statistics
@@ -109,7 +110,7 @@ function filterCombos(combos, settings, metadata) {
 
     const wobbled = _.some(wobbles, (pummelCount) => pummelCount > 8);
     const threshold = (combo.endPercent - combo.startPercent) > minimumComboPercent;
-    const acceptable = (combo.endPercent - combo.startPercent) > 70;
+    const acceptable = (combo.endPercent - combo.startPercent) > 110;
     const totalDmg = _.sumBy(combo.moves, ({damage}) => damage);
     const largeSingleHit = _.some(combo.moves, ({damage}) => damage/totalDmg >= .8);
 
@@ -122,6 +123,7 @@ function filterCombos(combos, settings, metadata) {
 }
 
 function getCombos() {
+  let totalLength = 0;
   let checkPercent = .1;
   let files = walk(basePath);
   console.log(`${files.length} files found, starting to filter for ${minimumComboPercent}% combos`);
@@ -171,7 +173,7 @@ function getCombos() {
             damageDone: endPercent-startPercent,
           }
         };
-
+        totalLength += (endFrame-startFrame) / 60;
         dolphin.queue.push(x);
       });
       combos.length === 0 ? noCombos++ : console.log(`File ${i+1} | ${combos.length} combo(s) found in ${path.basename(file)}`);
@@ -186,13 +188,15 @@ function getCombos() {
     }
   });
   dolphin.queue = shuffle(dolphin.queue);
+  dolphin.totalLengthSeconds = totalLength + dolphin.queue.length * 20;
   fs.writeFileSync(outputFilename, JSON.stringify(dolphin));
   console.log(`${badFiles} bad file(s) ignored`);
   console.log(`${numCPU} game(s) with CPUs removed`);
   console.log(`${numWobbles} wobble(s) removed`);
   console.log(`${numCG} chaingrab(s) removed`);
   console.log(`${puffMiss} Puff combo(s) removed\n`);
-  console.log(`${dolphin.queue.length} good combo(s) found`)
+  console.log(`${dolphin.queue.length} good combo(s) found`);
+  console.log(`${sec2time(dolphin.totalLengthSeconds)} approximate VOD length`)
   console.log(`${noCombos / (files.length - badFiles) * 100}% of the good files had no valid combos`);
 }
 getCombos();

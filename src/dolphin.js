@@ -25,7 +25,7 @@ async function launchDolphin(config, dolphinLag = 3, spinner) {
     await sleep(replayObject.totalLengthSeconds);
     // kill dolphin
     spinner.text = 'Killing Dolphin';
-    kill('Dolphin');
+    kill(dolphinExe);
 }
 
 // exports

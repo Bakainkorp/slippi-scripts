@@ -11,7 +11,8 @@ async function launchOBSWebsocket(config, websocket, spinner) {
     // obs config
     const pathToOBS = config["OBS"]; // set obs path (i.e., directory it's in)
     const sceneName = config["OBS_SCENE"];  // set scene name
-    const profileName = config["OBS_PROFILE"];  // set scene name
+    const sceneCollName = config["OBS_SC_NAME"];
+    const profileName = config["OBS_PROFILE"];  // set profile name
     const obsWSAddress = `localhost:${config["OBS_PORT"]}`;
     const obsWSPassword = config["OBS_PASS"];
     // start/launch obs
@@ -32,6 +33,14 @@ async function launchOBSWebsocket(config, websocket, spinner) {
                     'profile-name': profileName
                 });
                 spinner.text = `Successfully set profile to ${profileName}.`;
+            }
+        })
+        .then(() => {
+            if (sceneCollName !== undefined) {
+                websocket.send('SetCurrentSceneCollection', {
+                    'sc-name': sceneCollName 
+                });
+                spinner.text = `Successfully set scene collection to ${sceneCollName}.`;
             }
         })
         .then(() => {
